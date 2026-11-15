@@ -127,7 +127,7 @@ export const api = {
 
       const data = new FormData();
       data.append('file', file);
-      data.append('projectId', projectId);
+      data.append('project_id', projectId);
 
       ingestionResult = await request('/v1/ingestions', {
         method: 'POST',

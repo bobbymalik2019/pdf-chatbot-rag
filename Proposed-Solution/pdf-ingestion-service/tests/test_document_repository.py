@@ -5,20 +5,38 @@ from uuid import uuid4
 import psycopg
 import pytest
 
-from pdf_ingestion_service.config.settings import Settings
+from pdf_ingestion_service.config.settings import settings
+from pdf_ingestion_service.persistence.database import (
+    DatabaseConnectionFactory
+)
 from pdf_ingestion_service.models.chunk import DocumentChunk
 from pdf_ingestion_service.persistence.document_repository import (
     DocumentRepository
 )
+from pdf_ingestion_service.dependencies import database_factory
 
+#We reuse the existing factory while obtaining a fresh PostgreSQL connection for each test
+#Previously I was using 
+#with psycopg.connect(settings.database_url) as conn:
+#    yield conn
+#    conn.rollback()
+#Psycopg's connection context manager automatically commits when the context exits successfully.
+#If you want a test fixture that always rolls back uncommitted changes, explicitly managing the connection lifecycle is clearer:
+#This ensures uncommitted changes are rolled back even if a test fails.
+#One caveat: If the code being tested explicitly commits its transaction or opens another connection and commits, 
+# this fixture cannot undo those changes. Our DocumentRepository currently creates its own connections, 
+# so its successful inserts will remain committed unless the test explicitly cleans them up.
+#For truly isolated repository integration tests, we'll eventually need transactional dependency injection or dedicated test-data cleanup.
 
 @pytest.fixture
 def db_connection():
-    settings = Settings()
+    conn = database_factory.get_connection()
 
-    with psycopg.connect(settings.database_url) as conn:
+    try:
         yield conn
+    finally:
         conn.rollback()
+        conn.close()
 
 
 @pytest.fixture
@@ -77,10 +95,12 @@ def test_project(db_connection):
 
 @pytest.fixture
 def repository():
-    settings = Settings()
+    database_factory = DatabaseConnectionFactory(
+        connection_string=settings.database_url
+    )
 
     return DocumentRepository(
-        connection_string=settings.database_url
+        connection_factory=database_factory.get_connection
     )
 
 
