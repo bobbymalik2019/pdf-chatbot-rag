@@ -1,0 +1,59 @@
+# Temporary projects
+UI testing/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node.js / React
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# IDE
+.idea/
+.vscode/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+UI-testing/
+*.tmp
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Local databases and dumps
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.sql.gz
+
+*.pptx
+
+# Local archives and backups
+*.zip
+*.7z
+
+# Temporary notes
+New Text Document.txt

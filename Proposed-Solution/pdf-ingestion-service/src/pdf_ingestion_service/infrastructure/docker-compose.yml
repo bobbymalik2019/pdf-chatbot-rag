@@ -1,0 +1,27 @@
+
+services:
+  pgvector:
+    image: pgvector/pgvector:0.8.1-pg17
+    container_name: rag-postgres
+
+    environment:
+      POSTGRES_USER: rag_user
+      POSTGRES_PASSWORD: XXXXXXXXXXXXXX
+      POSTGRES_DB: rag_db
+
+    ports:
+      - "127.0.0.1:5433:5432"
+
+    volumes:
+      - C:/Bobby/ContainerData/rag_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag_user -d rag_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    restart: unless-stopped
+
+volumes:
+  rag_postgres_data:
