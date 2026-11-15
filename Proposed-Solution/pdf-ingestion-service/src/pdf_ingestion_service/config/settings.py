@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     ollama_embedding_model: str = "nomic-embed-text"
     embedding_dimensions: int = 768
 
+    ollama_llm_model: str = "llama3.1:latest"
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

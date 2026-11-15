@@ -9,45 +9,10 @@ import logging
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
+from pdf_ingestion_service.models.rag_context import ContextSource, RAGContext, RetrievedChunk
 
 
 logger = logging.getLogger(__name__)
-
-
-class RetrievedChunk(BaseModel):
-    """Normalized input from the existing retrieval layer."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    chunk_id: UUID
-    document_id: UUID
-    filename: str = Field(min_length=1)
-    content: str
-
-    page_number: int | None = Field(default=None, ge=1)
-
-    # Optional normalized relevance score, if available.
-    similarity_score: float | None = None
-
-
-class ContextSource(BaseModel):
-    """Metadata retained for source citation verification."""
-
-    marker: str
-    chunk_id: UUID
-    document_id: UUID
-    filename: str
-    page_number: int | None = None
-
-
-class RAGContext(BaseModel):
-    """Output consumed by the future prompt builder."""
-
-    context_text: str
-    sources: list[ContextSource]
-
-    included_chunks: int
-    truncated: bool = False
 
 
 class RAGContextBuilder:
@@ -132,3 +97,5 @@ class RAGContextBuilder:
             included_chunks=len(sources),
             truncated=truncated
         )
+# Shared module-level instance
+rag_context_builder = RAGContextBuilder()
