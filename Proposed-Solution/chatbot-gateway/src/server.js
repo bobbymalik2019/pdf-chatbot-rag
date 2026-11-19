@@ -5,6 +5,9 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { sessionMiddleware } from './session.js';
+import { oidcLogin } from './oidc.js';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '127.0.0.1';
@@ -59,9 +62,28 @@ app.use((req, res, next) => {
   );
   next();
 });
+
+app.use(sessionMiddleware);
+
 app.get('/healthz', (_req, res) =>
   res.json({ status: 'ok', service: 'chatbot-gateway' }),
 );
+
+app.get('/auth/login', oidcLogin);
+
+if (process.env.NODE_ENV === 'development') {
+  app.get('/auth/session-test', (req, res) => {
+    req.session.testCounter = (req.session.testCounter || 0) + 1;
+
+    res.setHeader('Cache-Control', 'no-store');
+
+    res.json({
+      message: 'Session persistence test',
+      counter: req.session.testCounter,
+    });
+  });
+}
+
 
 // No express.json(), multer, or body-reading middleware before this proxy.
 // Stream JSON, multipart uploads, PDF bytes and upstream event streams unchanged.

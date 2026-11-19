@@ -21,6 +21,9 @@ from pdf_ingestion_service.dependencies import document_repository
 
 from pdf_ingestion_service.dependencies import document_repository
 from pdf_ingestion_service.config.settings import settings
+from pdf_ingestion_service.storage.pdf_storage_service import (
+    pdf_storage_service,
+)
 
 router = APIRouter(
     prefix="/api/v1/ingestions",
@@ -40,7 +43,8 @@ ingestion_service = IngestionService(
                                                 model=settings.ollama_embedding_model),
     document_repository=document_repository,
     embedding_model=settings.ollama_embedding_model,
-    embedding_batch_size=16
+    embedding_batch_size=16,
+    pdf_storage_service=pdf_storage_service
 )
 
 @router.post("")

@@ -1184,3 +1184,17 @@ nav[aria-label="Knowledge Projects"] {
   }
 }
 
+.citation-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.citation-link:hover {
+  background: #edf5ef;
+  border-color: #a9c9b3;
+}

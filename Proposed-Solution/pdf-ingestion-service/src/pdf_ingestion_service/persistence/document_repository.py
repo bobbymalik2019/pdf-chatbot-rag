@@ -7,6 +7,7 @@ import psycopg
 from pgvector.psycopg import register_vector
 from collections.abc import Callable
 from psycopg import Connection
+from uuid import uuid4
 
 from pdf_ingestion_service.models.chunk import DocumentChunk
 
@@ -23,7 +24,8 @@ class DocumentRepository:
         page_count: int,
         chunks: list[DocumentChunk],
         embeddings: list[list[float]],
-        embedding_model: str
+        embedding_model: str,
+        document_id: UUID | None = None,
     ) -> UUID:
 
         if len(chunks) != len(embeddings):
@@ -45,21 +47,22 @@ class DocumentRepository:
 
             with conn.cursor() as cursor:
 
+                document_id = document_id or uuid4()
                 cursor.execute(
                     """
                     INSERT INTO documents (
+                        id,
                         project_id,
                         filename,
                         page_count,
                         status
                     )
-                    VALUES (%s, %s, %s, 'READY')
-                    RETURNING id
+                    VALUES (%s, %s, %s, %s, 'READY')
                     """,
-                    (project_id, filename, page_count)
+                    (document_id, project_id, filename, page_count)
                 )
 
-                document_id = cursor.fetchone()[0]
+                #document_id = cursor.fetchone()[0]
 
                 for chunk, embedding in zip(chunks, embeddings):
 
@@ -132,4 +135,38 @@ class DocumentRepository:
         )
 
         return documents
+    def get_document(
+        self,
+        project_id: UUID,
+        document_id: UUID,
+    ) -> dict | None:
 
+        with self._connection_factory() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                        id,
+                        project_id,
+                        filename,
+                        page_count,
+                        status
+                    FROM documents
+                    WHERE id = %s
+                      AND project_id = %s
+                      AND status = 'READY'
+                    """,
+                    (document_id, project_id),
+                )
+
+                row = cursor.fetchone()
+
+                if row is None:
+                    return None
+
+                columns = [
+                    column.name
+                    for column in cursor.description
+                ]
+
+                return dict(zip(columns, row))

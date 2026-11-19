@@ -64,6 +64,19 @@ async function fileStore(id, file) {
   });
 }
 export const api = {
+
+      async answerProject(projectId, question, topK = 5) {
+      return request(
+        `/v1/projects/${encodeURIComponent(projectId)}/answer`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            question,
+            top_k: topK
+          })
+        }
+      );
+    },
     async searchProject(projectId, query, topK = 5) {
     return request(
       `/v1/projects/${encodeURIComponent(projectId)}/search`,

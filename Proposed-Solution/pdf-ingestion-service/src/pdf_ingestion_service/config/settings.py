@@ -1,4 +1,4 @@
-
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_embedding_model: str = "nomic-embed-text"
     embedding_dimensions: int = 768
+    pdf_storage_backend: str = "local"
+    pdf_storage_path: Path = Path("storage/documents")
 
     ollama_llm_model: str = "llama3.1:latest"
     model_config = SettingsConfigDict(

@@ -11,6 +11,9 @@ from pdf_ingestion_service.api.rag_answer import (
 from pdf_ingestion_service.api.knowledge_projects import (
     router as projects_router
 )
+from pdf_ingestion_service.api.document_files import (
+    router as document_files_router,
+)
 
 configure_logging(level="INFO")
 
@@ -24,6 +27,8 @@ app.include_router(router)
 app.include_router(ingestion_router)
 app.include_router(projects_router)
 app.include_router(rag_answer_router)
+app.include_router(document_files_router)
+
 
 @app.get("/health")
 def health():

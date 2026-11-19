@@ -1,0 +1,19 @@
+{
+  "name": "sso",
+  "version": "1.0.0",
+  "description": "A multi-service, production-*oriented* SSO development baseline:",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "format": "prettier --write \"frontend/**/*.{js,jsx,json,css,md}\" \"gateway/**/*.{js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"frontend/**/*.{js,jsx,json,css,md}\" \"gateway/**/*.{js,jsx,json,css,md}\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^3.10.1"
+  }
+}

@@ -1,0 +1,11 @@
+**/.env
+**/.venv/
+**/node_modules/
+**/dist/
+**/__pycache__/
+**/.pytest_cache/
+**/*.pyc
+**/keys/*.pem
+**/*.log
+storage/
+/Proposed-Solution/pdf-ingestion-service/storage/

@@ -3,6 +3,7 @@ import logging
 import math
 import time
 from uuid import UUID
+from uuid import uuid4
 from pdf_ingestion_service.readers.content_reader import ContentReader
 
 from pdf_ingestion_service.models.document import (
@@ -18,6 +19,10 @@ from pdf_ingestion_service.embeddings.embedding_generator import (
 from pdf_ingestion_service.persistence.document_repository import (
     DocumentRepository
 )
+from pdf_ingestion_service.storage.pdf_storage_service import (
+    PDFStorageService,
+)
+
 logger = logging.getLogger(__name__)
 
 class IngestionService:
@@ -26,7 +31,8 @@ class IngestionService:
                          embedding_generator: EmbeddingGenerator,
                          document_repository: DocumentRepository,
                          embedding_model: str = "nomic-embed-text",
-                         embedding_batch_size: int = 16 ):
+                         embedding_batch_size: int = 16,
+                        pdf_storage_service: PDFStorageService | None = None, ):
 
         if embedding_batch_size <= 0:
             raise ValueError("embedding_batch_size must be positive")
@@ -38,7 +44,7 @@ class IngestionService:
         self.document_repository = document_repository
         self.embedding_model = embedding_model
         self.embedding_batch_size = embedding_batch_size
-
+        self.pdf_storage_service = pdf_storage_service
     
 
     def ingest(
@@ -106,14 +112,44 @@ class IngestionService:
         logger.info("EMBEDDING COMPLETE | total_vectors=%d", len(embeddings))
         
         #Persist document, chunks, and embeddings
-        document_id = self.document_repository.save_document(
-            project_id=project_id,
-            filename=filename,
-            page_count=len(normalized_pages),
-            chunks=chunks,
-            embeddings=embeddings,
-            embedding_model=self.embedding_model
+        document_id = uuid4()
+
+        if self.pdf_storage_service is None:
+            raise RuntimeError("PDF storage is not configured")
+
+        # Save the original PDF before committing the
+        # document as READY in PostgreSQL.
+        self.pdf_storage_service.save(
+            document_id=document_id,
+            content=content,
         )
+
+        try:
+            self.document_repository.save_document(
+                project_id=project_id,
+                filename=filename,
+                page_count=len(normalized_pages),
+                chunks=chunks,
+                embeddings=embeddings,
+                embedding_model=self.embedding_model,
+                document_id=document_id,
+            )
+
+        except Exception:
+            logger.exception(
+                "DOCUMENT PERSISTENCE FAILED | document_id=%s",
+                document_id,
+            )
+
+            try:
+                self.pdf_storage_service.delete(document_id)
+            except OSError:
+                logger.exception(
+                    "PDF CLEANUP FAILED | document_id=%s",
+                    document_id,
+                )
+
+            raise
 
         return IngestionResult(
             document_id=document_id,

@@ -1,0 +1,17 @@
+{
+    admin 127.0.0.1:2019
+}
+
+https://ssotest.charter26.com {
+    bind 127.0.0.1
+    tls tls/charter26-local.pem tls/charter26-local-key.pem
+
+    reverse_proxy 127.0.0.1:3100
+}
+
+https://chatbottest.charter26.com {
+    bind 127.0.0.1
+    tls tls/charter26-local.pem tls/charter26-local-key.pem
+
+    reverse_proxy 127.0.0.1:3000
+}

@@ -287,50 +287,54 @@ useEffect(() => {
   }
 
 
+
 async function performSearch() {
-    const searchText = query.trim();
+  const searchText = query.trim();
 
-    setSearchMode(true);
-    setSearchError('');
-    setSearchResponse(null);
+  setSearchMode(true);
+  setSearchError('');
+  setSearchResponse(null);
 
-    // Invalidates any earlier search still running.
-    const requestId = ++searchRequestId.current;
+  const requestId = ++searchRequestId.current;
 
-    if (!selectedProjectId) {
-      setSearchError('Please select a Knowledge Project first.');
+  if (!selectedProjectId) {
+    setSearchError('Please select a Knowledge Project first.');
+    setSearchLoading(false);
+    return;
+  }
+
+  if (!searchText) {
+    setSearchError('Please enter a question.');
+    setSearchLoading(false);
+    return;
+  }
+
+  setSearchLoading(true);
+
+  try {
+    const response = await api.answerProject(
+      selectedProjectId,
+      searchText,
+      5
+    );
+
+    // Ignore responses from older requests.
+    if (requestId !== searchRequestId.current) return;
+
+    setSearchResponse(response);
+
+  } catch (error) {
+    if (requestId !== searchRequestId.current) return;
+
+    setSearchError(error.message);
+
+  } finally {
+    if (requestId === searchRequestId.current) {
       setSearchLoading(false);
-      return;
-    }
-
-    if (!searchText) {
-      setSearchError('Please enter a search query.');
-      setSearchLoading(false);
-      return;
-    }
-
-    setSearchLoading(true);
-
-    try {
-      const response = await api.searchProject(
-        selectedProjectId,
-        searchText,
-        5
-      );
-
-      if (requestId !== searchRequestId.current) return;
-
-      setSearchResponse(response);
-    } catch (error) {
-      if (requestId !== searchRequestId.current) return;
-
-      setSearchError(error.message);
-    } finally {
-      if (requestId === searchRequestId.current) {
-        setSearchLoading(false);
-      }
     }
   }
+}
+
 
 
  async function createProject() 
@@ -721,85 +725,112 @@ async function performSearch() {
           <section className="workspace">
                 {searchMode ? (
       <div className="semantic-search-results">
-        <div className="search-results-header">
-          <div>
-            <h1>Search results</h1>
-            <p>
-              {searchResponse
-                ? `Showing ${searchResponse.results.length} matching passages`
-                : 'Searching your Knowledge Project'}
-            </p>
+            <div className="search-results-header">
+            <div>
+              <h1>AI Answer</h1>
+              <p>
+                {searchResponse
+                  ? `Based on ${searchResponse.included_chunks} document passages`
+                  : 'Searching your Knowledge Project'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                ++searchRequestId.current;
+                setSearchMode(false);
+                setSearchLoading(false);
+                setSearchError('');
+                setSearchResponse(null);
+              }}
+            >
+              <X size={15} />
+              Back to workspace
+            </button>
           </div>
 
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => {
-              ++searchRequestId.current;
-              setSearchMode(false);
-              setSearchLoading(false);
-              setSearchError('');
-            }}
-          >
-            <X size={15} />
-            Back to workspace
-          </button>
-        </div>
+          {searchLoading && (
+            <div className="search-status" role="status">
+              <Loader2 size={19} className="spin" />
+              Retrieving documents and generating your answer...
+            </div>
+          )}
 
-        {searchLoading && (
-          <div className="search-status">
-            <Loader2 size={19} className="spin" />
-            Searching document embeddings...
-          </div>
-        )}
-
-        {searchError && (
-          <p className="search-error" role="alert">
-            {searchError}
-          </p>
-        )}
-
-        {!searchLoading &&
-          !searchError &&
-          searchResponse?.results.length === 0 && (
-            <p className="search-status">
-              No matching document passages found.
+          {searchError && (
+            <p className="search-error" role="alert">
+              {searchError}
             </p>
           )}
 
-        {!searchLoading &&
-          searchResponse?.results.map((result) => (
-            <article
-              className="search-result-card"
-              key={result.chunk_id}
-            >
-              <div className="search-result-meta">
-                <div className="search-result-source">
-                  <FileText size={17} />
-                  <strong>{result.filename}</strong>
+          {!searchLoading && !searchError && searchResponse && (
+            <>
+              <article className="search-result-card">
+                <div className="search-result-meta">
+                  <strong>{searchResponse.question}</strong>
                 </div>
 
-                <span>
-                  {result.start_page === result.end_page
-                    ? `Page ${result.start_page}`
-                    : `Pages ${result.start_page}–${result.end_page}`}
-                </span>
-              </div>
+                <p
+                  className="search-result-text"
+                  style={{ whiteSpace: 'pre-wrap' }}
+                >
+                  {searchResponse.answer}
+                </p>
+              </article>
 
-              <p className="search-result-text">
-                {result.text}
+              {searchResponse.sources?.length > 0 && (
+                <div className="rag-sources">
+
+                  <h2>Sources</h2>
+
+        {searchResponse.sources.map((source) => {
+                      const pdfUrl =
+                        `/api/v1/projects/${encodeURIComponent(selectedProjectId)}` +
+                        `/documents/${encodeURIComponent(source.document_id)}/file` +
+                        `#page=${Math.max(1, Number(source.page_number) || 1)}`;
+
+                      return (
+                        <a
+                          key={source.marker}
+                          href={pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="search-result-card citation-link"
+                          title={`Open ${source.filename} at page ${source.page_number || 1}`}
+                        >
+                          <div className="search-result-meta">
+                            <div className="search-result-source">
+                              <FileText size={17} />
+                              <strong>
+                                [{source.marker}] {source.filename}
+                              </strong>
+                            </div>
+
+                            <span>
+                              {source.page_number != null
+                                ? `Page ${source.page_number}`
+                                : 'Page unavailable'}
+                            </span>
+
+                            <ExternalLink size={15} />
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+
+              <p className="tiny muted">
+                Model: {searchResponse.model || 'Unknown'}
+                {' · '}
+                {searchResponse.duration_seconds.toFixed(2)} seconds
               </p>
+            </>
+          )}
 
-              <div className="search-result-footer">
-                <span>Chunk #{result.chunk_index}</span>
-                <span>
-                  Cosine similarity: {Number(result.similarity).toFixed(3)}
-                </span>
-              </div>
-            </article>
-          ))}
-      </div>
-    ) : loading ? (
+        </div>
+      ) : loading ? (
               <div className="center-loading">
                 <Loader2 className="spin" /> Loading workspace…
               </div>

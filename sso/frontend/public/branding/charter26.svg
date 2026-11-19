@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 501 486">
+  <title>Charter26</title>
+  <desc>Charter26 journey mark with 26, directional arrow and North Star.</desc>
+
+  <!-- Left stage marker -->
+  <rect x="28" y="258" width="98" height="23" rx="11.5" fill="#06235F"/>
+
+  <!-- 2026 starting point -->
+  <circle cx="230" cy="275" r="103" fill="#06235F"/>
+
+  <!-- 26 -->
+  <text x="230" y="324"
+        text-anchor="middle"
+        font-family="DejaVu Sans, Arial, sans-serif"
+        font-size="139"
+        font-weight="700"
+        fill="#FFFFFF">26</text>
+
+  <!-- Career-stage markers -->
+  <rect x="218" y="70" width="24" height="100" rx="12" fill="#06235F"/>
+  <rect x="218" y="381" width="24" height="99" rx="12" fill="#06235F"/>
+
+  <!-- Up-right direction arrow -->
+  <path d="M 335 271 L 418 188"
+        fill="none"
+        stroke="#06235F"
+        stroke-width="25"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+  <path d="M 389 188 L 418 188 L 418 217"
+        fill="none"
+        stroke="#06235F"
+        stroke-width="25"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- North Star -->
+  <path fill="#F4A000" d="
+      M 425 7
+      C 433 52, 444 76, 499 94
+      C 444 103, 433 114, 425 177
+      C 417 114, 406 103, 351 94
+      C 406 76, 417 52, 425 7 Z"/>
+</svg>

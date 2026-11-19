@@ -1,0 +1,17 @@
+
+node_modules/
+dist/
+build/
+coverage/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.git/
+*.lock
+*.min.js
+.env
+.env.*
+!.env.example
+*.pem
+*.key
