@@ -13,6 +13,7 @@ dependencies = [
     "pgvector>=0.5.1",
     "psycopg[binary]>=3.3.9",
     "pydantic-settings>=2.16.2",
+    "pyjwt[crypto]>=2.10,<3",
     "pymupdf>=2.1",
     "python-multipart>=0.0.33",
     "uvicorn[standard]>=0.54.0",

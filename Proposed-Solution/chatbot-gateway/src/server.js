@@ -103,6 +103,8 @@ app.get('/auth/me', (req, res) => {
 });
 
 
+
+
 if (process.env.NODE_ENV === 'development') {
   app.get('/auth/session-test', (req, res) => {
     req.session.testCounter = (req.session.testCounter || 0) + 1;
@@ -237,6 +239,8 @@ app.use(
 );
 
 
+app.use(requirePageAuthentication);
+
 app.use(
   express.static(dist, {
     index: false,
@@ -294,3 +298,22 @@ for (const signal of ['SIGINT', 'SIGTERM'])
       process.exit(1);
     }, 10000).unref();
   });
+
+ function requirePageAuthentication(req, res, next) {
+  const auth = req.session?.auth;
+
+  const authenticated =
+    auth &&
+    typeof auth.sub === 'string' &&
+    auth.sub.length > 0 &&
+    typeof auth.accessToken === 'string' &&
+    auth.accessToken.length > 0 &&
+    Number.isFinite(auth.accessTokenExpiresAt) &&
+    auth.accessTokenExpiresAt > Date.now();
+
+  if (!authenticated) {
+    return res.redirect(302, '/auth/login');
+  }
+
+  next();
+}

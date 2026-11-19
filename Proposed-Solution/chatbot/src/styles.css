@@ -1198,3 +1198,169 @@ nav[aria-label="Knowledge Projects"] {
   background: #edf5ef;
   border-color: #a9c9b3;
 }
+
+/* Charter26 SSO visual palette — PDF Chatbot
+   Visual-only overrides. Existing layout, breakpoints, and behavior are retained. */
+:root {
+  --c26-navy: #0d1b2b;
+  --c26-navy-hover: #182e43;
+  --c26-navy-border: #293a49;
+  --c26-teal: #14896f;
+  --c26-teal-hover: #0e765d;
+  --c26-mint: #78e7c5;
+  --c26-active: #20433f;
+  --c26-text: #18263a;
+  --c26-muted: #7c889b;
+  --c26-workspace: #f5f7fa;
+  --c26-border: #e3e8ef;
+  color: var(--c26-text);
+  background: var(--c26-workspace);
+}
+
+body, .app, .main, .workspace, .chat {
+  color: var(--c26-text);
+  background: var(--c26-workspace);
+}
+
+/* Deep navy navigation, as in the SSO application. */
+.sidebar {
+  background: var(--c26-navy);
+  border-right: 1px solid var(--c26-navy-border);
+  color: #d8e2ed;
+}
+.sidebar .brand { color: #fff; }
+.sidebar .brand-mark { background: #205d59; color: #6be8c2; }
+.sidebar .brand-dot { color: var(--c26-mint); }
+.sidebar .workspace-label { color: #8aa6ba; }
+.sidebar .section-label, .sidebar .collapsible-heading { color: #aabbd0; }
+.sidebar .collapsible-heading:hover { color: var(--c26-mint); }
+.sidebar .section-label span:last-child,
+.sidebar .document-count { background: #243849; color: #d8e2ed; }
+.sidebar .document { color: #aabbd0; }
+.sidebar .document strong { color: #d8e2ed; }
+.sidebar .document small { color: #9db0c2; }
+.sidebar .document:hover { background: var(--c26-navy-hover); }
+.sidebar .document.active {
+  background: var(--c26-active);
+  border-color: #32675d;
+  color: var(--c26-mint);
+}
+.sidebar .document.active strong { color: var(--c26-mint); }
+.sidebar .empty-sidebar { color: #9db0c2; }
+.sidebar .sidebar-bottom > .row {
+  background: #172d3e;
+  border-color: #293e4f;
+  color: #a9c1ca;
+}
+.sidebar .sidebar-bottom p, .sidebar .profile small { color: #9db0c2; }
+.sidebar .profile { border-top-color: var(--c26-navy-border); }
+.sidebar .profile strong { color: #fff; }
+.sidebar .avatar { background: #336d64; color: #fff; }
+.sidebar .online { background: #58d8b4; }
+.sidebar .project-documents::-webkit-scrollbar-thumb { background: #365366; }
+.sidebar .project-documents::-webkit-scrollbar-thumb:hover { background: #477488; }
+
+/* Keep the search input legible in the dark sidebar. */
+.sidebar .search {
+  background: #172e40;
+  border-color: #354f60;
+  color: #97b9bd;
+}
+.sidebar .search:focus-within {
+  border-color: #58d8b4;
+  box-shadow: 0 0 0 2px #58d8b422;
+}
+.sidebar .search input { color: #f5fafb; }
+.sidebar .search input::placeholder { color: #91aab9; }
+
+/* SSO primary and secondary controls. */
+.primary, .search-submit, .send, .scores button.selected {
+  background: var(--c26-teal);
+  border-color: var(--c26-teal);
+  color: #fff;
+}
+.primary:hover, .search-submit:hover, .send:hover {
+  background: var(--c26-teal-hover);
+  border-color: var(--c26-teal-hover);
+}
+.secondary {
+  background: #fff;
+  border-color: #dfe6ec;
+  color: #476071;
+}
+.secondary:hover { background: #f3f6f8; }
+button:focus-visible, a:focus-visible { outline-color: #58d8b4; }
+input:focus, textarea:focus { outline-color: #1f9c7f; }
+
+/* Workspace, navigation bar, and document workbench. */
+.topbar, .document-header {
+  background: #fff;
+  border-bottom-color: var(--c26-border);
+}
+.breadcrumb, .document-header p, .welcome > p,
+.chat-intro p, .message-meta time { color: var(--c26-muted); }
+.current, .welcome h1, .chat-intro h2, .document-header h1 {
+  color: var(--c26-text);
+}
+.mode-pill { color: #476071; border-color: #e2ebee; background: #eff4f6; }
+.mode-pill span { background: var(--c26-teal); }
+.icon { color: #617b89; }
+.icon:hover { background: #e9edf1; }
+.eyebrow { color: #16866e; }
+.welcome h1 span { color: var(--c26-teal); }
+
+/* Panels and document interaction. */
+.dropzone {
+  background: linear-gradient(130deg, #fff, #f8fbfa);
+  border-color: #cbded9;
+  box-shadow: 0 3px 18px rgba(15,36,57,.03);
+}
+.dropzone.drag { background: #e8f6f0; border-color: var(--c26-teal); }
+.upload-icon, .pdf-badge, .assistant-symbol, .message-avatar {
+  background: #e8f6f0;
+  border-color: #d7e8e3;
+  color: #16896e;
+}
+.feature-row, .dropzone p, .dropzone small { color: var(--c26-muted); }
+.document-header .ready, .search-status { color: #16866e; }
+.prompt-grid button, .rating-panel, .search-result-card {
+  background: #fff;
+  border-color: var(--c26-border);
+  box-shadow: 0 3px 18px rgba(15,36,57,.03);
+}
+.prompt-grid button { color: #476071; }
+.prompt-grid button:hover { background: #f3f8f6; border-color: #8ac6b5; }
+.message-text, .search-result-text { color: #566879; }
+.user .message-text { background: #f0f4f6; border-color: #e3e8ef; }
+.message-avatar.user { background: #edf1f5; color: #617b89; }
+.rating-panel textarea { border-color: #d8e0e7; }
+.scores button { border-color: #dfe6ec; color: #476071; }
+.citation { background: #e8f6f0; border-color: #cfe7df; color: #16866e; }
+.citation-link:hover { background: #dff4ed; border-color: #8ac6b5; }
+
+/* Search answers remain in the MAIN workspace, never the sidebar. */
+.semantic-search-results {
+  background: var(--c26-workspace);
+  color: var(--c26-text);
+}
+.search-results-header h1 { color: var(--c26-text); }
+.search-results-header p { color: var(--c26-muted); }
+.search-result-meta { color: #16866e; }
+.search-result-footer { color: #617b89; border-top-color: var(--c26-border); }
+
+/* Chat composer and PDF viewer. */
+.composer-wrap { background: linear-gradient(#f5f7fa00, #f5f7fa); }
+.composer {
+  background: #fff;
+  border-color: #d8e0e7;
+  box-shadow: 0 4px 20px rgba(15,36,57,.05);
+}
+.composer:focus-within {
+  border-color: #1f9c7f;
+  box-shadow: 0 0 0 3px #199e8018;
+}
+.composer textarea { color: var(--c26-text); }
+.composer textarea::placeholder { color: #8493a0; }
+.pdf-panel { background: #f0f3f6; border-left-color: var(--c26-border); }
+.pdf-panel > .row { background: #fff; border-bottom-color: var(--c26-border); }
+.center-loading, .thinking { color: #617b89; }

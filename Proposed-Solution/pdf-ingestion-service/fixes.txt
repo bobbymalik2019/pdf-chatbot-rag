@@ -1,0 +1,48 @@
+
+
+11-19-20026-510:27PM=================================================================================================================================
+Two problems that require different solutions
+Problem A — Slow processing
+
+Ollama may take a long time to generate embeddings for 1,313 chunks.
+
+Solutions include better batching, measuring throughput, reducing unnecessary chunks, and evaluating faster embedding engines.
+
+
+
+Problem B — Unresponsive UI
+
+Our upload currently uses a request-response workflow. The user may see a loading state for the entire ingestion duration.
+
+A long-running request doesn't necessarily block React's rendering thread, so we must establish whether the UI actually freezes or simply offers no usable progress feedback.
+
+
+11-19-20026-5:14PM=================================================================================================================================
+Completed the OAuth 2.0 / OpenID Connect authentication integration through the Node.js Gateway, including login, callback, session persistence, and initial API protection.
+
+Completed and verified
+Task	                      Implementation	                                                                 Verification
+1. OIDC login	              /auth/login, state, nonce, PKCE S256	                                             HTTP 302 to Charter26 SSO
+2. OIDC callback	          /auth/callback, authorization-code exchange, JWT and nonce validation	Successful login and return to Chatbot
+3. Session persistence	      PostgreSQL chatbot_sessions, secure cookie	                                     Authenticated session persisted
+4. Session regeneration	      New session after successful authentication	Authenticated session created without pending OIDC transaction
+5. Authentication status	   /auth/me	401 unauthenticated, 200 authenticated
+6. Gateway API protection	   Reject requests without valid authenticated session	HTTP 401
+7. JWT forwarding	           Gateway attaches session-held access token to FastAPI requests	Implemented; independent upstream verification pending
+8. Existing RAG integration	   Authenticated project listing through Gateway	HTTP 200, all 16 projects returned
+9. Browser isolation	       Normal and Incognito authentication	Both successful
+
+Files changed in this development cycle
+File	Changes
+chatbot-gateway/src/oidc.js	Implemented secure OIDC callback, JWT validation, and session regeneration
+chatbot-gateway/src/server.js	Added /auth/callback, /auth/me, and authenticated /api proxy
+chatbot-gateway/package.json	Added jose dependency
+chatbot-gateway/package-lock.json	Updated dependency lockfile
+chatbot-gateway/.env	Added OIDC_ACCESS_AUDIENCE=pdf-ingestion-service — local only, do not commit
+
+Issues resolved
+- PostgreSQL authentication failed because the password was incorrectly parsed from .env.
+- Missing OIDC_ACCESS_AUDIENCE caused the callback to return HTTP 502.
+- Incorrect route placement caused Cannot access 'app' before initialization.
+- Diagnosed Caddy HTTP 502 caused by the Gateway not running.
+- Corrected callback diagnostic stages and verified successful authentication.

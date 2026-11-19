@@ -1,0 +1,331 @@
+CHARTER26 SSO + PDF CHATBOT — LOCAL DEVELOPMENT COMMAND REFERENCE
+Windows PowerShell | Updated: 2026-11-19
+
+USAGE
+- Run commands in a PowerShell terminal unless a section says SQL.
+- Commands are grouped by purpose. Each service normally needs its own terminal.
+- Do not paste actual passwords, OAuth codes, tokens, or session cookie values into this file.
+- Paths below use the repository location recorded in our development work.
+- Commands under "Check before use" are proposed based on project structure; inspect the applicable package.json/pyproject.toml before running.
+
+======================================================================
+1. REPOSITORY / NAVIGATION
+======================================================================
+# Project root (adjust if you moved it)
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project"
+
+# Show current directory and folders
+Get-Location
+Get-ChildItem -Directory
+Get-ChildItem -Force
+
+# Open current directory in VS Code
+code .
+
+# Find JavaScript package files
+Get-ChildItem -Recurse -Filter package.json -File | Select-Object -ExpandProperty FullName
+
+======================================================================
+2. RUN THE APPLICATIONS (SEPARATE TERMINALS)
+======================================================================
+# A. PostgreSQL / pgvector container
+# Start container if it already exists
+ docker start rag-postgres
+# Check status
+ docker ps --filter "name=rag-postgres"
+# Follow PostgreSQL logs
+ docker logs --tail 50 -f rag-postgres
+
+# B. Ollama (normally started by the Windows application)
+ollama list
+# Check Ollama API health / available models
+curl.exe -sS http://127.0.0.1:11434/api/tags
+# Follow Ollama's Windows log
+Get-Content "$env:LOCALAPPDATA\Ollama\server.log" -Wait -Tail 50
+
+# C. PDF Chatbot FastAPI — VERIFIED development command
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\Proposed-Solution\pdf-ingestion-service"
+$env:PSYCOPG_IMPL = "python"
+python -m uvicorn pdf_ingestion_service.main:app --app-dir src --host 127.0.0.1 --port 8000
+
+# D. PDF Chatbot Node.js BFF — check package.json scripts if needed
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\Proposed-Solution\chatbot-gateway"
+npm start
+
+# E. React Chatbot build (Gateway serves built UI)
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\Proposed-Solution\chatbot"
+npm run build
+# Optional Vite dev server, if configured
+npm run dev
+
+# F. Charter26 SSO FastAPI — CHECK BEFORE USE: entry-point command inferred from layout
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\sso\service"
+$env:PSYCOPG_IMPL = "python"
+uv run python -m uvicorn sso_service.main:app --app-dir src --host 127.0.0.1 --port 8100
+
+# G. Charter26 SSO frontend build
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\sso\frontend"
+npm run build
+Test-Path .\dist\index.html
+
+# H. Charter26 SSO Node.js gateway — command used previously
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\sso\gateway"
+npm start
+
+# I. Caddy HTTPS reverse proxy (keep this terminal open)
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\Proposed-Solution\local-infrastructure"
+caddy run --config Caddyfile --adapter caddyfile
+# Validate config before starting or after editing
+caddy validate --config Caddyfile --adapter caddyfile
+
+# Local URLs
+# SSO:     https://ssotest.charter26.com
+# Chatbot: https://chatbottest.charter26.com
+# Caddy -> SSO gateway at http://127.0.0.1:3100
+# Caddy -> Chatbot gateway at http://127.0.0.1:3000
+
+======================================================================
+3. HEALTH CHECKS / NETWORK TROUBLESHOOTING
+======================================================================
+# Chatbot FastAPI
+curl.exe -i http://127.0.0.1:8000/health
+# SSO and Chatbot Gateway base URLs
+curl.exe -i http://127.0.0.1:3100/
+curl.exe -i http://127.0.0.1:3000/
+
+# Verify Windows hosts resolution; expected 127.0.0.1
+ping -4 ssotest.charter26.com
+ping -4 chatbottest.charter26.com
+# Show hosts file (requires permissions for edits, not reading)
+Get-Content "$env:SystemRoot\System32\drivers\etc\hosts"
+
+# Check listeners for all important local ports
+3000,3100,443,8000,8100,5433,11434 | ForEach-Object {
+    Get-NetTCPConnection -LocalPort $_ -State Listen -ErrorAction SilentlyContinue |
+        Select-Object LocalAddress,LocalPort,OwningProcess
+}
+
+# Identify process by PID from above
+Get-Process -Id <PID>
+# Stop an identified stale process only when safe
+Stop-Process -Id <PID>
+
+# HTTPS diagnostic: --ssl-no-revoke avoids Windows Schannel revocation check
+# and should NOT be used as an application-level TLS bypass.
+curl.exe --ssl-no-revoke -i https://ssotest.charter26.com/
+curl.exe --ssl-no-revoke -i https://chatbottest.charter26.com/
+
+# If host resolves but port 443 does not listen, start Caddy.
+# If HTTPS returns 502, verify gateway port 3100 or 3000 is running.
+# If HTTPS returns certificate error, inspect mkcert trust and certificate.
+
+======================================================================
+4. SSO / OIDC DIAGNOSTICS
+======================================================================
+# Public OIDC discovery
+curl.exe --ssl-no-revoke -i https://ssotest.charter26.com/.well-known/openid-configuration
+# Public JWKS key set (not a private key)
+curl.exe --ssl-no-revoke -i https://ssotest.charter26.com/.well-known/jwks.json
+
+# Initiate Chatbot login; expected 302 to SSO /oauth/authorize
+# The Location/Set-Cookie headers contain sensitive transaction/session values;
+# inspect locally and do not paste unredacted output into public channels.
+curl.exe --ssl-no-revoke -sS -D - -o NUL https://chatbottest.charter26.com/auth/login
+
+# Re-run standalone OIDC integration test (use its own docs/config first)
+cd "C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\sso\service"
+$env:PSYCOPG_IMPL = "python"
+uv run python scripts/test_oidc_flow.py
+
+# Compare RSA public/private key consistency (local validation utility)
+uv run python scripts/verifykeys.py
+
+# Bootstrap a local administrator — performs a privileged action; use deliberately
+uv run python scripts/bootstrap.py admin
+
+# NOTE: /auth/callback, /auth/me, refresh, and logout are pending integration
+# milestones. Do not assume they work merely because /auth/login redirects.
+
+======================================================================
+5. POSTGRESQL / SESSION CHECKS
+======================================================================
+# Check container shell / database ready status
+ docker exec rag-postgres pg_isready -U rag_user -d rag_db
+
+# Open psql inside Postgres container for Chatbot DB
+ docker exec -it rag-postgres psql -U rag_user -d rag_db
+
+# Run these SQL queries inside psql (NOT in PowerShell):
+# SELECT current_user, current_database();
+# SELECT extname FROM pg_extension WHERE extname = 'vector';
+# SELECT COUNT(*) FROM public.chatbot_sessions;
+# SELECT expire, sess ? 'oidcTransaction' AS has_oidc_transaction
+# FROM public.chatbot_sessions ORDER BY expire DESC;
+# SELECT id, name, owner_id FROM public.knowledge_projects ORDER BY created_at DESC;
+# \q
+
+# Remember: Chatbot sessions live in rag_db; SSO identities/sessions live in sso_db.
+# Never copy session JSON or passwords into shared logs or chat output.
+
+======================================================================
+6. PDF CHATBOT API / RAG CHECKS
+======================================================================
+# List knowledge projects through BFF
+curl.exe -i http://127.0.0.1:3000/api/v1/projects
+# Direct FastAPI project listing (may require authentication after integration)
+curl.exe -i http://127.0.0.1:8000/api/v1/projects
+
+# Example PDF ingestion using PowerShell + curl.exe; replace placeholders.
+# NOTE: Requires a valid project UUID and a real PDF path.
+# curl.exe -i -F "project_id=<PROJECT_UUID>" -F "file=@C:\path\to\file.pdf;type=application/pdf" http://127.0.0.1:3000/api/v1/ingestions
+
+# Uploaded document/PDF route implemented separately; verify endpoint and auth
+# before copying a document download curl command into this reference.
+
+======================================================================
+7. GIT — CHECK-IN / IGNORE VERIFICATION
+======================================================================
+# Worktree and index
+git status
+git status --short
+git diff
+git diff --cached
+git diff --cached --stat
+git diff --cached --check
+
+# Check why a local file is ignored
+git check-ignore -v Proposed-Solution/pdf-ingestion-service/storage/
+# Find files that Git currently tracks, filtered for potential secrets
+git ls-files | Select-String '(^|/)\.env$|private\.pem$|rootCA-key\.pem$|charter26-local-key\.pem$'
+
+# Stage intended changes
+git add .gitignore
+# Unstage personal local-only notes (does NOT delete local copies)
+git restore --staged -- "commands.txt"
+git restore --staged -- "superadmin_writetobobbymalik@gmai.txt"
+git restore --staged -- "sso/service/Select-Object"
+
+# Compare with remote before/after push
+git fetch origin
+git diff origin/main --stat
+git log -1 --oneline
+
+# Commit and push after reviewing staged content
+git commit -m "feat: describe changes here"
+git push origin main
+
+# Typical root .gitignore patterns:
+# /commands.txt
+# /superadmin_writetobobbymalik@gmai.txt
+# /sso/service/Select-Object
+# storage/
+# .env
+# .env.*
+# !.env.example    (only if example files are sanitized)
+
+======================================================================
+8. NODE / PYTHON DEPENDENCIES, BUILD, FORMATTING, TESTS
+======================================================================
+# Create Node package metadata in a NEW project (not needed if package.json exists)
+npm init -y
+npm install
+npm install --save-dev prettier
+npm run format
+npm run format:check
+# Validate package.json syntax
+node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('Valid JSON')"
+
+# SSO Python environment (from sso/service directory)
+uv sync --extra test
+# Check whether 'test' vs 'tests' is the actual optional-dependency name
+# in pyproject.toml before selecting the command.
+
+# SSO frontend formatting (from sso directory)
+npx prettier --write "frontend/src/**/*.{js,jsx,css}"
+npx prettier --write "frontend/**/*.{js,jsx,json,css,html}" --ignore-path .prettierignore
+
+# Test (only where pytest is installed/configured)
+# uv run pytest
+
+======================================================================
+9. ORIGINAL commands.txt — PRESERVED VERBATIM FOR HISTORICAL REFERENCE
+======================================================================
+# Historical shell output below includes repetitions, abbreviated commands
+# containing '...', and earlier unsuccessful attempts. Prefer sections 1–8.
+
+python -m uvicorn pdf_ingestion_service.main:app --app-dir src --host 127.0.0.1 --port 8000
+
+Get-Content "$env:LOCALAPPDATA\Ollama\server.log" -Wait -Tail 50
+
+
+npm init -y
+npm install --save-dev prettier
+npm run format
+npm run format:check
+
+//validate a json
+node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('Valid JSON')"
+
+
+
+history
+
+  Id CommandLine
+  -- -----------
+   1 cd C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\sso\service
+   2 uv sync --extra tests
+   3 uv sync --extra test
+   4 Copy-Item .env.example .env
+   5 code .
+   6 cd ..
+   7 code .
+   8 Get-Location
+   9 Get-ChildItem -Directory
+  10 Get-ChildItem .\sso -Directory
+  11 cd sso
+  12 Get-ChildItem -Recurse -Filter package.json -File |...
+  13 cd ..
+  14 Get-ChildItem .\sso -Force
+  15 code .
+  16 Test-Path .\dist\index.html
+  17 dir
+  18 cd .\frontend\
+  19 Test-Path .\dist\index.html
+  20 cd ..
+  21 cd .\gateway\
+  22 npm install
+  23 npm start
+  24 Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  25 kill 38244
+  26 Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  27 kill 21316
+  28 Get-NetTCPConnection -LocalPort 3100 -State Listen -ErrorAction SilentlyContinue
+  29 curl.exe -i http://127.0.0.1:3100/
+  30 cd  ..
+  31 Get-ChildItem .\frontend\src -Recurse -File |...
+  32 Get-Content .\frontend\src\app\AuthProvider.jsx
+  33 Get-Content .\frontend\src\app\Router.jsx
+  34 Get-Content .\frontend\src\services\api.js
+  35 cd .\frontend\
+  36 Get-ChildItem .\dist -Recurse -Filter "*.map"
+  37  Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  38  Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  39  Get-NetTCPConnection -LocalPort 8100 -State Listen Select-Object LocalAddress, LocalPort, OwningProcess
+  40 Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  41 Get-NetTCPConnection -LocalPort 8100 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique ...
+  42 Get-NetTCPConnection -LocalPort 8100 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique ...
+  43 npm run build
+  44 npm run build
+  45 cd ..
+  46 npx prettier --write "frontend/src/**/*.{js,jsx,css}"
+  47 npx prettier --write "frontend/**/*.{js,jsx,json,css,html}" --ignore-path .prettierignore
+  48 Get-NetTCPConnection -LocalPort 8100 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique ...
+  49 $env:PSYCOPG_IMPL = "python"
+  50 uv run python scripts/bootstrap.py admin
+  51 clear
+  52 uv run python servic/scripts/bootstrap.py admin
+  53 dir
+  54 uv run python service/scripts/bootstrap.py admin
+  55 cd service
+  56 uv run python scripts/bootstrap.py admin
+  57 uv run python scripts/bootstrap.py admin

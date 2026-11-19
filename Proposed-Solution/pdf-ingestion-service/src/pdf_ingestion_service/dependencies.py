@@ -16,6 +16,10 @@ from pdf_ingestion_service.persistence.semantic_search_repository import (
     SemanticSearchRepository
 )
 
+from pdf_ingestion_service.persistence.app_user_repository import (
+    AppUserRepository,
+)
+
 database_factory = DatabaseConnectionFactory(
     connection_string=settings.database_url
 )
@@ -29,5 +33,8 @@ project_repository = KnowledgeProjectRepository(
 )
 
 semantic_search_repository = SemanticSearchRepository(
+    connection_factory=database_factory.get_connection
+)
+app_user_repository = AppUserRepository(
     connection_factory=database_factory.get_connection
 )
