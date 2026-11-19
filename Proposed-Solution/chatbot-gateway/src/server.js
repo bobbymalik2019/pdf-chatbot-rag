@@ -6,7 +6,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { sessionMiddleware } from './session.js';
-import { oidcLogin } from './oidc.js';
+import { oidcLogin, oidcCallback } from './oidc.js';
+
+
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 3000);
@@ -70,6 +72,36 @@ app.get('/healthz', (_req, res) =>
 );
 
 app.get('/auth/login', oidcLogin);
+app.get('/auth/callback', oidcCallback);
+
+
+app.get('/auth/me', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+
+  const auth = req.session?.auth;
+
+  if (
+    !auth ||
+    typeof auth.sub !== 'string' ||
+    !auth.sub ||
+    !Number.isFinite(auth.accessTokenExpiresAt) ||
+    auth.accessTokenExpiresAt <= Date.now()
+  ) {
+    return res.status(401).json({
+      authenticated: false,
+      message: 'Authentication required',
+    });
+  }
+
+  return res.status(200).json({
+    authenticated: true,
+    user: {
+      id: auth.sub,
+      roles: Array.isArray(auth.roles) ? auth.roles : [],
+    },
+  });
+});
+
 
 if (process.env.NODE_ENV === 'development') {
   app.get('/auth/session-test', (req, res) => {
@@ -87,18 +119,40 @@ if (process.env.NODE_ENV === 'development') {
 
 // No express.json(), multer, or body-reading middleware before this proxy.
 // Stream JSON, multipart uploads, PDF bytes and upstream event streams unchanged.
+
 app.use(
   '/api',
+
+  // 1. Authenticate the browser session before forwarding requests.
   (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
-    // This gateway does NOT create identities or implement authentication.
-    // Python must authenticate every request and authorize every resource.
+
+    const auth = req.session?.auth;
+
+    if (
+      !auth ||
+      typeof auth.sub !== 'string' ||
+      !auth.sub ||
+      typeof auth.accessToken !== 'string' ||
+      !auth.accessToken ||
+      !Number.isFinite(auth.accessTokenExpiresAt) ||
+      auth.accessTokenExpiresAt <= Date.now()
+    ) {
+      return res.status(401).json({
+        authenticated: false,
+        message: 'Authentication required',
+      });
+    }
+
     next();
   },
+
+  // 2. Forward authenticated requests to FastAPI.
   createProxyMiddleware({
     target: upstream.origin,
     changeOrigin: true,
     xfwd: false,
+
     pathRewrite: (requestPath, req) => {
       console.log('PROXY DEBUG:', {
         originalUrl: req.originalUrl,
@@ -107,13 +161,18 @@ app.use(
 
       return `${prefix}${req.originalUrl}`;
     },
+
     proxyTimeout: timeout,
     timeout,
+
     on: {
       proxyReq(proxyReq, req) {
         proxyReq.setHeader('X-Request-ID', req.requestId);
-        // Never let browser-supplied identity headers impersonate a user.
+
+        // Remove browser-controlled authentication and identity headers.
         for (const name of [
+          'authorization',
+          'cookie',
           'x-user-id',
           'x-user-email',
           'x-user-role',
@@ -124,15 +183,22 @@ app.use(
           'x-forwarded-for',
           'x-forwarded-host',
           'x-forwarded-proto',
-        ])
+        ]) {
           proxyReq.removeHeader(name);
-        // Authorization and Cookie headers pass through to Python.
-        // Do not insert an unscoped shared service key as a substitute for user auth.
+        }
+
+        // Use only the JWT stored in the authenticated BFF session.
+        proxyReq.setHeader(
+          'Authorization',
+          `Bearer ${req.session.auth.accessToken}`,
+        );
       },
+
       proxyRes(proxyRes) {
-        // Prevent upstream responses from enabling shared caches for private PDFs/chat.
+        // Prevent caching private API responses.
         proxyRes.headers['cache-control'] = 'no-store';
       },
+
       error(error, req, res) {
         console.error(
           JSON.stringify({
@@ -141,16 +207,22 @@ app.use(
             code: error.code || 'UNKNOWN',
           }),
         );
+
         if (res.headersSent) {
           res.destroy();
           return;
         }
-        const timedOut = ['ETIMEDOUT', 'ESOCKETTIMEDOUT'].includes(error.code);
+
+        const timedOut = ['ETIMEDOUT', 'ESOCKETTIMEDOUT'].includes(
+          error.code,
+        );
+
         res.writeHead(timedOut ? 504 : 502, {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-store',
           'X-Request-ID': req.requestId,
         });
+
         res.end(
           JSON.stringify({
             message: timedOut
@@ -163,6 +235,7 @@ app.use(
     },
   }),
 );
+
 
 app.use(
   express.static(dist, {

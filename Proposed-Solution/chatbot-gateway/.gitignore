@@ -2,3 +2,11 @@ node_modules/
 .env
 *.log
 local-infrastructure/tls/*.pem
+
+# Personal development notes and commands
+/commands.txt
+/superadmin_writetobobbymalik@gmai.txt
+/sso/service/Select-Object
+
+# Runtime PDF storage
+storage/

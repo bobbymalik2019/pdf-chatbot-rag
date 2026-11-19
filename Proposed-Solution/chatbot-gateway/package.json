@@ -17,6 +17,7 @@
     "express": "^5.1.0",
     "express-session": "^1.19.0",
     "http-proxy-middleware": "^3.0.5",
+    "jose": "^6.2.18",
     "pg": "^8.23.1"
   },
   "devDependencies": {
