@@ -102,7 +102,36 @@ app.get('/auth/me', (req, res) => {
   });
 });
 
+const chatbotOrigin = new URL(process.env.OIDC_REDIRECT_URI).origin;
 
+app.post('/auth/logout', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  if (req.get('Origin') !== chatbotOrigin) {
+    return res.status(403).json({ message: 'Invalid request origin' });
+  }
+  if (!req.session) return res.status(401).json({ message: 'Session unavailable' });
+  req.session.destroy((error) => {
+    if (error) {
+      console.error('chatbot_logout_error', { requestId: req.requestId });
+      return res.status(500).json({ message: 'Logout failed' });
+    }
+    res.clearCookie('chatbot.sid', {
+      httpOnly: true, secure: true, sameSite: 'lax', path: '/',
+    });
+    return res.status(200).json({ authenticated: false });
+  });
+});
+
+// Public page AFTER logout, must be registered BEFORE requirePageAuthentication.
+app.get('/signed-out', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.type('html').send(`<!doctype html><html lang="en"><head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Signed out · Chatbot</title></head>
+    <body style="font-family:system-ui;margin:12vh auto;max-width:460px;padding:24px;color:#18263a">
+    <h1>You have signed out</h1><p>Your Chatbot session has ended.</p>
+    <a href="/auth/login">Sign in again</a></body></html>`);
+});
 
 
 if (process.env.NODE_ENV === 'development') {

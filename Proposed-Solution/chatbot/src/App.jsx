@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import UserMenu from './components/auth/UserMenu';
+
 import {
             FileText,
             Plus,
@@ -699,7 +701,7 @@ async function performSearch() {
           </div>
           <span className="mode-pill">
             <span />
-            {demoMode ? 'Demo mode' : 'Live workspace'}
+            <UserMenu />
           </span>
         </header>
         {error && (

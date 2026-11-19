@@ -1,0 +1,22 @@
+.account-menu { position: relative; flex-shrink: 0; }
+.account-menu-trigger { display: flex; align-items: center; gap: 9px; padding: 5px 11px 5px 5px; border: 1px solid #dfe6ec; border-radius: 999px; background: #fff; color: #18263a; cursor: pointer; font: inherit; }
+.account-menu-trigger:hover, .account-menu-trigger[aria-expanded="true"] { background: #f5f7fa; border-color: #b7c9d0; }
+.account-menu-avatar { display: grid; place-items: center; flex-shrink: 0; border-radius: 50%; background: #4932a8; color: #fff; font-weight: 600; }
+.account-menu-avatar-sm { width: 29px; height: 29px; font-size: 15px; }
+.account-menu-avatar-lg { width: 66px; height: 66px; font-size: 34px; margin-bottom: 9px; }
+.account-menu-trigger-label { font-size: 12px; font-weight: 650; }
+.account-menu-dropdown { position: absolute; top: calc(100% + 10px); right: 0; z-index: 40; width: min(320px, calc(100vw - 28px)); padding: 9px; background: #fff; color: #18263a; border: 1px solid #dfe6ec; border-radius: 14px; box-shadow: 0 18px 48px rgba(13, 27, 43, 0.17); }
+.account-menu-identity { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 12px 17px; border-radius: 10px; background: #f0f4ee; overflow-wrap: anywhere; }
+.account-menu-identity strong { font-size: 14px; max-width: 100%; }
+.account-menu-identity > span:not(.account-menu-avatar) { color: #526879; font-size: 12px; margin-top: 5px; max-width: 100%; }
+.account-menu-identity small { color: #73869a; font-size: 10px; margin-top: 9px; }
+.account-menu-actions { padding: 8px 0 2px; }
+.account-menu-action { display: flex; gap: 12px; align-items: center; width: 100%; padding: 12px 10px; background: transparent; border: 0; border-radius: 8px; color: #18263a; text-align: left; font: inherit; font-size: 12px; cursor: pointer; }
+.account-menu-action span { flex: 1; }
+.account-menu-action small { color: #7b8d9c; font-size: 10px; }
+.account-menu-action:hover:not(:disabled) { background: #f1f5f7; }
+.account-menu-action:disabled { opacity: .58; cursor: default; }
+.account-menu-separator { border-top: 1px solid #e6eaf0; margin: 5px 0; }
+.account-menu-signout { font-weight: 650; }
+.account-menu-error { color: #a93636; font-size: 11px; margin: 6px 10px 10px; }
+@media (max-width: 600px) { .account-menu-trigger-label { display: none; } }
