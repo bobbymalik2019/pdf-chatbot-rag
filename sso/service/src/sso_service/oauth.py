@@ -11,6 +11,10 @@ from .db import connection
 from .security import digest, random_token, pkce_challenge, safe_equals, issue_tokens, jwks
 from .settings import get_settings
 
+import jwt
+from .security import public_key
+from .auth import COOKIE
+
 router = APIRouter()
 PKCE_PATTERN = re.compile(r'^[A-Za-z0-9_-]{43}$')
 VERIFIER_PATTERN = re.compile(r'^[A-Za-z0-9\-._~]{43,128}$')
@@ -53,6 +57,7 @@ def discovery():
         'token_endpoint_auth_methods_supported': ['client_secret_basic'],
         'code_challenge_methods_supported': ['S256'],
         'scopes_supported': ['openid', 'profile'],
+        'end_session_endpoint': f'{i}/oauth/logout',
     }
 
 
@@ -195,3 +200,93 @@ def userinfo(authorization: str | None = Header(default=None)):
                 return {'sub': str(user['id']), 'name': user['display_name']}
     except (jwt.PyJWTError, KeyError, ValueError) as ex:
         raise HTTPException(401, 'Invalid token') from ex
+
+
+@router.get('/oauth/logout')
+def end_session(
+    request: Request,
+    id_token_hint: str,
+    post_logout_redirect_uri: str,
+):
+    """
+    End the current Charter26 browser session after
+    validating the initiating OIDC client.
+    """
+
+    try:
+        claims = jwt.decode(
+            id_token_hint,
+            public_key(),
+            algorithms=['RS256'],
+            issuer=get_settings().issuer,
+            options={
+                'verify_exp': False,
+                'require': ['iss', 'sub', 'aud', 'iat'],
+            },
+        )
+    except jwt.PyJWTError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail='Invalid logout request',
+        ) from exc
+
+    client_id = claims.get('aud')
+
+    if not isinstance(client_id, str):
+        raise HTTPException(400, 'Invalid logout client')
+
+    # Require the SSO browser session to correspond
+    # to the identity in the signed ID token.
+    user = find_session(request.cookies.get(COOKIE))
+
+    if str(user['id']) != claims['sub']:
+        raise HTTPException(
+            status_code=403,
+            detail='Logout identity mismatch',
+        )
+
+    with connection() as db:
+        with db.cursor() as cur:
+            client = load_client(cur, client_id)
+
+            registered_uri = client[
+                'post_logout_redirect_uri'
+            ]
+
+            if post_logout_redirect_uri != registered_uri:
+                raise HTTPException(
+                    status_code=400,
+                    detail='Invalid post-logout redirect URI',
+                )
+
+            cur.execute(
+                """
+                UPDATE auth_sessions
+                SET revoked_at = now()
+                WHERE token_hash = %s
+                  AND user_id = %s
+                  AND revoked_at IS NULL
+                """,
+                (
+                    digest(request.cookies[COOKIE]),
+                    user['id'],
+                ),
+            )
+
+    response = RedirectResponse(
+        url=post_logout_redirect_uri,
+        status_code=302,
+    )
+
+    response.delete_cookie(
+        COOKIE,
+        path='/',
+        secure=get_settings().secure_cookies,
+        httponly=True,
+        samesite='lax',
+    )
+
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Referrer-Policy'] = 'no-referrer'
+
+    return response

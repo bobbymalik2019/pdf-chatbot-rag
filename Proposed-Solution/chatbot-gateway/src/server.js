@@ -1,4 +1,5 @@
 import express from 'express';
+import { selectApiUpstream } from './api-routing.js';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -15,6 +16,11 @@ const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '127.0.0.1';
 const timeout = Number(process.env.UPSTREAM_TIMEOUT_MS || 180000);
 const upstream = new URL(process.env.PYTHON_API_BASE_URL || 'http://127.0.0.1:8000');
+const chatHistoryUpstream = new URL(
+  process.env.CHAT_HISTORY_API_BASE_URL || 'http://127.0.0.1:8001'
+);
+
+
 if (
   !['http:', 'https:'].includes(upstream.protocol) ||
   upstream.username ||
@@ -27,6 +33,21 @@ if (
     'PYTHON_API_BASE_URL must be an HTTP(S) origin only; use PYTHON_API_PREFIX for its path.',
   );
 }
+
+if (
+  !['http:', 'https:'].includes(chatHistoryUpstream.protocol) ||
+  chatHistoryUpstream.username ||
+  chatHistoryUpstream.password ||
+  chatHistoryUpstream.pathname !== '/' ||
+  chatHistoryUpstream.search ||
+  chatHistoryUpstream.hash
+) {
+  throw new Error(
+    'CHAT_HISTORY_API_BASE_URL must be an HTTP(S) origin only'
+  );
+}
+
+
 if (
   !Number.isInteger(port) ||
   port < 1 ||
@@ -148,6 +169,10 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 
+function resolveApiUpstream(req) {
+  return selectApiUpstream(req.originalUrl, upstream.origin, chatHistoryUpstream.origin);
+}
+
 // No express.json(), multer, or body-reading middleware before this proxy.
 // Stream JSON, multipart uploads, PDF bytes and upstream event streams unchanged.
 
@@ -181,6 +206,7 @@ app.use(
   // 2. Forward authenticated requests to FastAPI.
   createProxyMiddleware({
     target: upstream.origin,
+    router: (req) => resolveApiUpstream(req),
     changeOrigin: true,
     xfwd: false,
 
@@ -312,6 +338,8 @@ app.use((error, req, res, next) => {
 const server = app.listen(port, host, () => {
   console.log(`chatbot gateway: http://${host}:${port}`);
   console.log(`Python target: ${upstream.origin}${prefix || '/'}; frontend: ${dist}`);
+  console.log(`Chat History target: ${chatHistoryUpstream.origin}`);
+   console.log(`Frontend: ${dist}`);
   if (!existsSync(index))
     console.warn(
       'Frontend dist/index.html is missing. API proxy is available; build the React project before opening the UI.',

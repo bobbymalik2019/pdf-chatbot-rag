@@ -10,7 +10,7 @@ from pdf_ingestion_service.application.rag_context_builder import (
 def test_context_builder():
 
     document_id = uuid4()
-    chunk_id = uuid4()
+    chunk_id = 1
 
     retrieved_chunks = [
         RetrievedChunk(
@@ -57,7 +57,7 @@ def test_context_budget():
 
     result = builder.build([
         RetrievedChunk(
-            chunk_id=uuid4(),
+            chunk_id=1,
             document_id=uuid4(),
             filename="test.pdf",
             content="A" * 500

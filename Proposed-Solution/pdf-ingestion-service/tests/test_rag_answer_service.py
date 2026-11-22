@@ -35,7 +35,7 @@ def owner_id():
 def search_results():
     return [
         {
-            "chunk_id": uuid4(),
+            "chunk_id": 1,
             "document_id": uuid4(),
             "filename": "Bobby_Malik-CV.pdf",
             "chunk_index": 0,

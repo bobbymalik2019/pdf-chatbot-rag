@@ -20,6 +20,19 @@ class Settings(BaseSettings):
     oidc_client_id: str = "chatbot-gateway"
     oidc_ca_cert_file: Path | None = None
 
+    # Shared Redis connection
+    redis_host: str = "127.0.0.1"
+    redis_port: int = 6379
+    redis_username: str = "default"
+    redis_password: str
+
+    # Shared JWKS cache
+    jwks_cache_key: str = "charter26:oidc:jwks"
+    jwks_cache_ttl_seconds: int = 300
+    jwks_refresh_lock_seconds: int = 10
+
+    jwks_forced_refresh_cooldown_seconds: int = 30
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -43,7 +43,7 @@ export function LoginPage() {
             alt="Charter26 logo"
             className="story-brand-logo"
           />
-      <span>Charter 26</span>
+      <span>Single Sign-On</span>
         </div>
         <div>
           <div className="kicker">TRUSTED IDENTITY PLATFORM</div>

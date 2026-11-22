@@ -2,6 +2,7 @@ import logging
 from uuid import UUID
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
+from fastapi import Depends
 
 from pdf_ingestion_service.application.rag_context_builder import (
     ContextSource
@@ -17,6 +18,11 @@ from pdf_ingestion_service.models.rag_answer import (
 from pdf_ingestion_service.services.rag_answer_service import (
     rag_answer_service
 )
+from pdf_ingestion_service.security.current_user import (
+    get_current_app_user
+)
+
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(
@@ -26,30 +32,33 @@ router = APIRouter(
 
 # Temporary development identity.
 # Replace with authenticated identity before deployment.
-DEV_OWNER_ID = UUID(
-    "52105c3d-ead8-4371-a2e8-f9d009452057"
-)
+# DEV_OWNER_ID = UUID(
+#     "52105c3d-ead8-4371-a2e8-f9d009452057"
+# )
 
 
 @router.post(
     "/{project_id}/answer",
-    response_model=RAGAnswerResponse
+    response_model=RAGAnswerResponse,
 )
 def answer_question(
     project_id: UUID,
-    request: RAGAnswerRequest
+    request: RAGAnswerRequest,
+    current_user: dict = Depends(get_current_app_user)
 ) -> RAGAnswerResponse:
 
+    owner_id = current_user["id"]
     logger.info(
-        "RAG API REQUEST | project=%s | top_k=%d",
+        "RAG API REQUEST | project=%s | owner=%s | top_k=%d",
         project_id,
+        owner_id,
         request.top_k
     )
 
     try:
         return rag_answer_service.answer(
             project_id=project_id,
-            owner_id=DEV_OWNER_ID,
+            owner_id=owner_id,
             question=request.question,
             top_k=request.top_k
         )

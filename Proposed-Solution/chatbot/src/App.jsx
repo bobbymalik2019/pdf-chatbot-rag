@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import UserMenu from './components/auth/UserMenu';
+import ConversationHistoryWorkspace from './components/chat/ConversationHistoryWorkspace.jsx';
 
 import {
             FileText,
@@ -717,14 +718,15 @@ async function performSearch() {
             </button>
           </div>
         )}
-        {demoMode && (
+        {/* {demoMode && (
           <div className="demo-notice">
             Interactive UI demo · Answers are placeholders, not PDF analysis · Data stays
             in this browser.
           </div>
-        )}
+        )} */}
         <div className="work-area">
           <section className="workspace">
+            <ConversationHistoryWorkspace projectId={selectedProjectId}>
                 {searchMode ? (
       <div className="semantic-search-results">
             <div className="search-results-header">
@@ -1055,6 +1057,7 @@ async function performSearch() {
                 </div>
               </>
             )}
+            </ConversationHistoryWorkspace>
           </section>
           {preview && active && (
             <aside className="pdf-panel">

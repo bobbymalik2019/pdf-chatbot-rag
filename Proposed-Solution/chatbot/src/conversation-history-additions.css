@@ -1,0 +1,7 @@
+/* Append to the existing src/conversation-history.css; no theme files are replaced. */
+.history-reader-footer { align-items: stretch; }
+.history-composer { display:flex; flex:1 1 auto; min-width:0; gap:10px; align-items:flex-end; }
+.history-composer textarea { flex:1 1 auto; width:100%; min-width:0; resize:vertical; max-height:140px; padding:10px 12px; font:inherit; line-height:1.5; border:1px solid #cbd8eb; border-radius:9px; color:inherit; background:inherit; }
+.history-composer textarea:focus-visible { outline:2px solid #5b87cb; outline-offset:2px; }
+.history-composer .history-create { flex-shrink:0; white-space:nowrap; }
+@media(max-width:760px) { .history-reader-footer { flex-wrap:wrap; } .history-composer { flex-basis:100%; flex-wrap:wrap; } }

@@ -48,9 +48,9 @@ from pdf_ingestion_service.llm.ollama_llm_client import (
 logger = logging.getLogger(__name__)
 
 # Temporary development identity
-DEV_OWNER_ID = UUID(
-    "52105c3d-ead8-4371-a2e8-f9d009452057"
-)
+# DEV_OWNER_ID = UUID(
+#     "52105c3d-ead8-4371-a2e8-f9d009452057"
+# )
 class RAGAnswerService:
 
     NO_ANSWER = (

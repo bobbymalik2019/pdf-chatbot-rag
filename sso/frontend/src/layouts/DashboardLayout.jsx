@@ -13,12 +13,16 @@ export function DashboardLayout() {
     <div className="shell">
       <aside className="side">
         <div className="brand">
-          <ShieldCheck size={28} />
-          <span>
-            Sentinel <small>SSO Platform</small>
-          </span>
+              <img
+                  src="/branding/charter26.svg"
+                  alt="Charter26"
+                  className="dashboard-brand-logo"
+                />
+                <span className="dashboard-brand-caption">
+                  SINGLE SIGN-ON
+                </span>
         </div>
-        <div className="side-caption">IDENTITY MANAGEMENT</div>
+        
         <NavLink
           to="/dashboard"
           className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}

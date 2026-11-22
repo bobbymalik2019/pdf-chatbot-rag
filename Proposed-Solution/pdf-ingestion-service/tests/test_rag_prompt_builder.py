@@ -34,7 +34,7 @@ def sample_context():
         sources=[
             ContextSource(
                 marker="S1",
-                chunk_id=uuid4(),
+                chunk_id = 1,
                 document_id=uuid4(),
                 filename="Bobby_Malik-CV.pdf",
                 page_number=None

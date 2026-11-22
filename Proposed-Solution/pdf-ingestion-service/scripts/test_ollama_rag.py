@@ -15,7 +15,7 @@ from pdf_ingestion_service.llm.ollama_llm_client import (
 
 chunks = [
     RetrievedChunk(
-        chunk_id=uuid4(),
+        chunk_id = 1,
         document_id=uuid4(),
         filename="Bobby_Malik-CV.pdf",
         content=(

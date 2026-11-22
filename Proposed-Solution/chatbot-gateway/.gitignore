@@ -10,3 +10,8 @@ local-infrastructure/tls/*.pem
 
 # Runtime PDF storage
 storage/
+
+playwright/.auth/
+test-results/
+playwright-report/
+*.before-routing-tests.bak

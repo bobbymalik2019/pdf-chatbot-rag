@@ -27,9 +27,9 @@ router = APIRouter(prefix="/api/v1/projects", tags=["Knowledge Projects"])
 
 
 # Temporary development identity
-DEV_OWNER_ID = UUID(
-    "52105c3d-ead8-4371-a2e8-f9d009452057"
-)
+# DEV_OWNER_ID = UUID(
+#     "52105c3d-ead8-4371-a2e8-f9d009452057"
+# )
 
 
 @router.post("", status_code=201)
