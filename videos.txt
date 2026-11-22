@@ -1,0 +1,10 @@
+I have checked in all three video i created to this locations
+
+https://github.com/bobbymalik2019/pdf-chatbot-rag
+
+
+these are 
+
+chatbotdemo.mp4
+PDF_Chatbot_Adaptive_RAG_Future_Roadmap.mp4
+PDF_Chatbot_Solution_Architecture.mp4
