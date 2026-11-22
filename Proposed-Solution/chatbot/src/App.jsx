@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import UserMenu from './components/auth/UserMenu';
 import ConversationHistoryWorkspace from './components/chat/ConversationHistoryWorkspace.jsx';
+import { chatHistoryApi } from './services/chatHistoryApi.js';
 
 import {
             FileText,
@@ -22,7 +23,7 @@ import {
             BookOpen,
             AlertCircle,
           } from 'lucide-react';
-import { api, demoMode } from './api';
+import { api } from './api';
 const prompts = [
                   'Summarize this document',
                   'What are the key takeaways?',
@@ -156,6 +157,78 @@ export default function App() {
     const [searchError, setSearchError] = useState('');
     const [searchResponse, setSearchResponse] = useState(null);
 
+    const [activeConversationId, setActiveConversationId] = useState(null);
+    const [conversationRevision, setConversationRevision] = useState(0);
+    const conversationRef = useRef(null);
+    const projectRef = useRef(null);
+    projectRef.current = selectedProjectId;
+    const activeConversationRef = useRef(null);
+    activeConversationRef.current = activeConversationId;
+
+    function normalizeHistoryMessage(message) {
+      return {
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        createdAt: message.created_at,
+        status: message.status,
+        citations: (message.sources || []).map((source) => ({
+          page: source.page_number ?? source.page ?? source.page_start,
+          filename: source.filename,
+          marker: source.marker,
+          documentId: source.document_id,
+        })),
+      };
+    }
+
+    function displaySessionFromProject(projectId, documents) {
+      const document = documents[0];
+      return {
+        id: `project-${projectId}`,
+        title: projects.find((p) => p.id === projectId)?.name || 'Project chat',
+        messages: [],
+        updatedAt: new Date().toISOString(),
+        document: {
+          id: document?.id || projectId,
+          name: document?.filename || 'Knowledge Project',
+          size: document?.size_bytes || 0,
+          status: 'ready',
+        },
+      };
+    }
+
+    function startNewChat() {
+      if (busySend.current) return;
+      setActiveConversationId(null);
+      activeConversationRef.current = null;
+      setQuestion('');
+      setError('');
+      setSearchMode(false);
+      setActive((previous) => previous
+        ? { ...previous, messages: [] }
+        : displaySessionFromProject(selectedProjectId, projectDocuments));
+    }
+
+    async function resumeConversation(conversationId) {
+      if (busySend.current || !selectedProjectId) return;
+      const requestedProject = selectedProjectId;
+      setError('');
+      try {
+        const history = await chatHistoryApi.messages(conversationId);
+        if (projectRef.current !== requestedProject) return;
+        setActiveConversationId(conversationId);
+        activeConversationRef.current = conversationId;
+        setQuestion('');
+        setSearchMode(false);
+        setActive((previous) => ({
+          ...(previous || displaySessionFromProject(requestedProject, projectDocuments)),
+          messages: history.map(normalizeHistoryMessage),
+        }));
+      } catch (error) {
+        setError(error.message);
+      }
+    }
+
     const searchRequestId = useRef(0);
 
   const input = useRef(null),bottom = useRef(null),selection = useRef(0),busySend = useRef(false),busyUpload = useRef(false);
@@ -216,6 +289,18 @@ export default function App() {
   }, [selectedProjectId]);
 
   useEffect(() => {
+    setActiveConversationId(null);
+    activeConversationRef.current = null;
+    setQuestion('');
+    setActive(null);
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    if (!selectedProjectId || !projectDocuments.length) return;
+    setActive((previous) => previous || displaySessionFromProject(selectedProjectId, projectDocuments));
+  }, [selectedProjectId, projectDocuments]);
+
+  useEffect(() => {
     let live = true;
     api
       .listSessions()
@@ -226,7 +311,7 @@ export default function App() {
         const item = list.find((s) => s.id === last) || list[0];
         if (item) {
           const s = await api.getSession(item.id);
-          if (live) setActive(s);
+          if (live && !projectRef.current) setActive(s);
         }
       })
       .catch((e) => live && setError(e.message))
@@ -417,33 +502,57 @@ async function performSearch() {
     }
   }
   async function ask(text = question) {
-    if (!active || !text.trim() || busySend.current || active.document.status !== 'ready')
+    const content = text.trim();
+    if (!content || busySend.current) return;
+    if (!selectedProjectId) {
+      setError('Please select a Knowledge Project first.');
       return;
+    }
+
+    const requestProject = selectedProjectId;
+    let conversationId = activeConversationRef.current;
     busySend.current = true;
     setSending(true);
     setError('');
-    const id = active.id;
-    const content = text.trim();
     setQuestion('');
+
     try {
-      const result = await api.ask(id, content);
-      setActive((s) =>
-        s?.id === id
-          ? {
-              ...s,
-              messages: [...s.messages, ...result.messages],
-              updatedAt: result.updatedAt,
-            }
-          : s,
-      );
-      setSessions((prev) =>
-        prev
-          .map((s) => (s.id === id ? { ...s, updatedAt: result.updatedAt } : s))
-          .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
-      );
+      if (!conversationId) {
+        const conversation = await chatHistoryApi.create(requestProject, content.slice(0, 100));
+        conversationId = conversation.id;
+        if (projectRef.current === requestProject) {
+          setActiveConversationId(conversationId);
+          activeConversationRef.current = conversationId;
+          setConversationRevision((n) => n + 1);
+        }
+      }
+
+      // This single request saves the question, generates the RAG answer,
+      // and persists the assistant message and citations in chat_history_db.
+      const result = await chatHistoryApi.ask(conversationId, content, 5);
+      if (projectRef.current !== requestProject || activeConversationRef.current !== conversationId) return;
+      const newMessages = [result.user_message, result.assistant_message].filter(Boolean).map(normalizeHistoryMessage);
+      setActive((previous) => ({
+        ...(previous || displaySessionFromProject(requestProject, projectDocuments)),
+        messages: [...(previous?.messages || []), ...newMessages],
+        updatedAt: new Date().toISOString(),
+      }));
+      setConversationRevision((n) => n + 1);
     } catch (e) {
-      setError(e.message);
-      setQuestion(content);
+      setError(e.message || 'Could not save or generate the answer.');
+      // A failed generation may still have saved the user question on the server.
+      // Reload to avoid losing or duplicating the persisted question.
+      if (conversationId && projectRef.current === requestProject) {
+        try {
+          const stored = await chatHistoryApi.messages(conversationId);
+          if (activeConversationRef.current === conversationId) {
+            setActive((previous) => ({
+              ...(previous || displaySessionFromProject(requestProject, projectDocuments)),
+              messages: stored.map(normalizeHistoryMessage),
+            }));
+          }
+        } catch { /* preserve original error */ }
+      }
     } finally {
       busySend.current = false;
       setSending(false);
@@ -670,16 +779,14 @@ async function performSearch() {
               <ShieldCheck size={18} />
               <div>
                 <strong>Pick up where you left off</strong>
-                <p>{demoMode ? 'Saved in this browser' : 'Document-linked sessions'}</p>
+                <p>Persistent conversation history</p>
               </div>
             </div>
             <div className="profile">
-              <span className="avatar">{demoMode ? 'D' : 'U'}</span>
+              <span className="avatar">U</span>
               <div>
-                <strong>{demoMode ? 'Demo workspace' : 'My workspace'}</strong>
-                <small>
-                  {demoMode ? 'Local preview mode' : 'Connected to your backend'}
-                </small>
+                <strong>My workspace</strong>
+                <small>Connected to your backend</small>
               </div>
               <span className="online" />
             </div>
@@ -718,15 +825,17 @@ async function performSearch() {
             </button>
           </div>
         )}
-        {/* {demoMode && (
-          <div className="demo-notice">
-            Interactive UI demo · Answers are placeholders, not PDF analysis · Data stays
-            in this browser.
-          </div>
-        )} */}
+
         <div className="work-area">
           <section className="workspace">
-            <ConversationHistoryWorkspace projectId={selectedProjectId}>
+            <ConversationHistoryWorkspace
+              projectId={selectedProjectId}
+              activeConversationId={activeConversationId}
+              revision={conversationRevision}
+              busy={sending}
+              onNewChat={startNewChat}
+              onSelectConversation={resumeConversation}
+            >
                 {searchMode ? (
       <div className="semantic-search-results">
             <div className="search-results-header">
@@ -956,9 +1065,7 @@ async function performSearch() {
                                 minute: '2-digit',
                               })}
                             </time>
-                            {m.role === 'assistant' && demoMode && (
-                              <span className="demo-tag">Demo answer</span>
-                            )}
+
                           </div>
                           <div className="message-text">{m.content}</div>
                           {m.citations?.length > 0 && (
@@ -980,7 +1087,7 @@ async function performSearch() {
                               ))}
                             </div>
                           )}
-                          {m.role === 'assistant' && (
+                          {m.role === 'assistant' && !activeConversationId && (
                             <Feedback
                               message={m}
                               sessionId={active.id}
@@ -1048,12 +1155,10 @@ async function performSearch() {
                       </button>
                     </div>
                   </form>
-                  <p className="composer-note">
-                    {demoMode
-                      ? 'Demo answers are illustrative only.'
-                      : 'AI-generated answers can be inaccurate. Verify important details against the PDF.'}{' '}
-                    <span>Enter to send · Shift + Enter for a new line</span>
-                  </p>
+                    <p className="composer-note">
+                      AI-generated answers can be inaccurate. Verify important details against the PDF.{' '}
+                      <span>Enter to send · Shift + Enter for a new line</span>
+                    </p>
                 </div>
               </>
             )}

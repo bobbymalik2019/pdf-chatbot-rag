@@ -185,31 +185,37 @@ export const api = {
     if (!file) throw new Error('The locally saved PDF is unavailable. Upload it again.');
     return URL.createObjectURL(file);
   },
-  async ask(id, content) {
-    if (!DEMO)
-      return request(`/sessions/${id}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      });
-    await wait();
-    const data = read();
-    const s = data.find((s) => s.id === id);
-    if (!s) throw new Error('Session not found');
-    const user = { id: uid(), role: 'user', content, createdAt: now() };
-    const assistant = {
-      id: uid(),
-      role: 'assistant',
-      content: `This is a demonstration response, not an answer extracted from your PDF.\n\nYour question: “${content}”\n\nThe interface has saved this question in your document session. Connect your backend to return a grounded answer and page references here. In live mode, this placeholder is never used.`,
-      createdAt: now(),
-      citations: [],
-      feedback: null,
-    };
-    s.messages.push(user, assistant);
-    s.updatedAt = now();
-    write(data);
-    return { messages: [user, assistant], updatedAt: s.updatedAt };
-  },
-  async feedback(sessionId, messageId, rating, comment) {
+  
+async ask(projectId, content) {
+  const response = await this.answerProject(projectId, content, 5);
+
+  const timestamp = new Date().toISOString();
+
+  return {
+    messages: [
+      {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content,
+        createdAt: timestamp,
+      },
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: response.answer,
+        createdAt: timestamp,
+        citations: (response.sources || []).map(source => ({
+          page: source.page_number,
+          filename: source.filename,
+          marker: source.marker,
+          documentId: source.document_id,
+        })),
+      },
+    ],
+    updatedAt: timestamp,
+  };
+},
+async feedback(sessionId, messageId, rating, comment) {
     if (!DEMO)
       return request(`/sessions/${sessionId}/messages/${messageId}/feedback`, {
         method: 'PUT',

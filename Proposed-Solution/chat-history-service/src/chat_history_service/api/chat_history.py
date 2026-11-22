@@ -58,30 +58,69 @@ Identity = Annotated[tuple[str, str], Depends(current_identity)]
 logger = logging.getLogger(__name__)
 
 
-def _call_rag_answer(project_id: UUID, question: str, top_k: int, token: str) -> dict:
-    """Call the existing authenticated RAG API; never accept assistant text from clients."""
-    url = os.getenv("RAG_ANSWER_URL", "http://127.0.0.1:8000/api/v1/answers")
+def _call_rag_answer(    
+    project_id: UUID,
+    question: str,
+    top_k: int,
+    token: str,
+) -> dict:
+    """Generate a grounded answer using the existing RAG API."""
+
+    rag_base_url = os.getenv(
+        "RAG_API_BASE_URL",
+        "http://127.0.0.1:8000",
+    ).rstrip("/")
+
+    url = (
+        f"{rag_base_url}/api/v1/projects/"
+        f"{project_id}/answer"
+    )
+
     payload = json.dumps({
-        "project_id": str(project_id), "question": question, "top_k": top_k,
+        "question": question,
+        "top_k": top_k,
     }).encode("utf-8")
-    req = Request(url, data=payload, method="POST", headers={
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    })
+
+    req = Request(
+        url,
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+    )
+
     try:
-        with urlopen(req, timeout=180) as response:
+        with urlopen(req, timeout=360) as response:
             data = json.load(response)
+
     except HTTPError as exc:
         logger.warning("RAG service HTTP error: %s", exc.code)
-        raise HTTPException(status_code=502, detail=f"RAG service returned HTTP {exc.code}") from exc
+        raise HTTPException(
+            status_code=502,
+            detail=f"RAG service returned HTTP {exc.code}",
+        ) from exc
+
     except (URLError, TimeoutError, OSError, ValueError) as exc:
-        logger.exception("RAG service unavailable or invalid response")
-        raise HTTPException(status_code=502, detail="RAG service unavailable or returned invalid JSON") from exc
+        logger.exception("RAG service unavailable")
+        raise HTTPException(
+            status_code=502,
+            detail="RAG service unavailable or invalid response",
+        ) from exc
+
     if not isinstance(data, dict) or not isinstance(data.get("answer"), str):
-        raise HTTPException(status_code=502, detail="RAG response missing answer")
+        raise HTTPException(
+            status_code=502,
+            detail="RAG response missing answer",
+        )
+
     if not isinstance(data.get("sources", []), list):
-        raise HTTPException(status_code=502, detail="RAG response has invalid sources")
+        raise HTTPException(
+            status_code=502,
+            detail="RAG response has invalid sources",
+        )
     return data
 
 

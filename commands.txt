@@ -1,0 +1,76 @@
+python -m uvicorn pdf_ingestion_service.main:app --app-dir src --host 127.0.0.1 --port 8000
+
+Get-Content "$env:LOCALAPPDATA\Ollama\server.log" -Wait -Tail 50
+
+
+npm init -y
+npm install --save-dev prettier
+npm run format
+npm run format:check
+
+//validate a json
+node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('Valid JSON')"
+
+
+
+history
+
+  Id CommandLine
+  -- -----------
+   1 cd C:\Bobby\Jobs-Related\Learning\IIT-M-Pravartak\capston-project\sso\service
+   2 uv sync --extra tests
+   3 uv sync --extra test
+   4 Copy-Item .env.example .env
+   5 code .
+   6 cd ..
+   7 code .
+   8 Get-Location
+   9 Get-ChildItem -Directory
+  10 Get-ChildItem .\sso -Directory
+  11 cd sso
+  12 Get-ChildItem -Recurse -Filter package.json -File |...
+  13 cd ..
+  14 Get-ChildItem .\sso -Force
+  15 code .
+  16 Test-Path .\dist\index.html
+  17 dir
+  18 cd .\frontend\
+  19 Test-Path .\dist\index.html
+  20 cd ..
+  21 cd .\gateway\
+  22 npm install
+  23 npm start
+  24 Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  25 kill 38244
+  26 Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  27 kill 21316
+  28 Get-NetTCPConnection -LocalPort 3100 -State Listen -ErrorAction SilentlyContinue
+  29 curl.exe -i http://127.0.0.1:3100/
+  30 cd  ..
+  31 Get-ChildItem .\frontend\src -Recurse -File |...
+  32 Get-Content .\frontend\src\app\AuthProvider.jsx
+  33 Get-Content .\frontend\src\app\Router.jsx
+  34 Get-Content .\frontend\src\services\api.js
+  35 cd .\frontend\
+  36 Get-ChildItem .\dist -Recurse -Filter "*.map"
+  37  Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  38  Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  39  Get-NetTCPConnection -LocalPort 8100 -State Listen Select-Object LocalAddress, LocalPort, OwningProcess
+  40 Get-NetTCPConnection -LocalPort 8100 -State Listen |...
+  41 Get-NetTCPConnection -LocalPort 8100 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique ...
+  42 Get-NetTCPConnection -LocalPort 8100 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique ...
+  43 npm run build
+  44 npm run build
+  45 cd ..
+  46 npx prettier --write "frontend/src/**/*.{js,jsx,css}"
+  47 npx prettier --write "frontend/**/*.{js,jsx,json,css,html}" --ignore-path .prettierignore
+  48 Get-NetTCPConnection -LocalPort 8100 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique ...
+  49 $env:PSYCOPG_IMPL = "python"
+  50 uv run python scripts/bootstrap.py admin
+  51 clear
+  52 uv run python servic/scripts/bootstrap.py admin
+  53 dir
+  54 uv run python service/scripts/bootstrap.py admin
+  55 cd service
+  56 uv run python scripts/bootstrap.py admin
+  57 uv run python scripts/bootstrap.py admin

@@ -56,7 +56,7 @@ class OllamaLLMClient:
         self,
         base_url: str,
         model: str = "llama3.1:latest",
-        timeout_seconds: float = 180.0
+        timeout_seconds: float = 300
     ):
 
         if not base_url.strip():

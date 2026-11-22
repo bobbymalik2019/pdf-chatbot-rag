@@ -1,0 +1,93 @@
+history
+    1  ls
+    2  pwd
+    3  clear
+    4  sudo su - ec2-user
+    5  exit
+    6  pwd
+    7  mvn --version
+    8  finger
+    9  echo $HOME
+   10  cd /home/ssm-user
+   11  ls
+   12  cd projects
+   13  ls
+   14  cd aws-fx-trading-platform/
+   15  git pull origin main
+   16  grep -E 'SocketAcceptHost|SocketAcceptPort|FileStorePath|FileLogPath'   fix-accepter-server/src/main/resources/acceptor.cfg
+   17  pwd
+   18  git pull origin main
+   19  cd cd ~/projects/aws-fx-trading-platform/fix-accepter-server
+   20  cd ~/projects/aws-fx-trading-platform/fix-accepter-server
+   21  MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+   22  source source /etc/profile.d/maven.sh
+   23  MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+   24  source /etc/profile.d/maven.sh
+   25  MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+   26  pwd
+   27  ls
+   28  ls -la .dockerignore
+   29  ls -lh target/fix-accepter-server-0.0.1-SNAPSHOT.jar
+   30  sudo docker build -t fx-lp-simulator:1.0 .
+   31  sudo docker images
+   32  sudo ss -lntp | grep ':9876'
+   33  sudo docker volume create fx-lp-store
+   34  sudo docker volume create fx-lp-log
+   35  sudo docker network create fx-exchange-1
+   36  sudo docker run -d   --name fx-lp-simulator   --network fx-exchange-1   -p 9876:9876   -v fx-lp-store:/app/store   -v fx-lp-log:/app/log   --memory=512m   fx-lp-simulator:1.0
+   37  sudo docker network inspect fx-exchange-1
+   38  sudo docker ps --filter name=fx-lp-simulator
+   39  sudo docker logs --tail 50 fx-lp-simulator
+   40  exit
+   41  pwd
+   42  history
+
+
+[ssm-user@ip-10-0-10-239 bin]$ sudo grep -nEi \
+  'java|corretto|jdk|maven|mvn|docker|git|dnf|yum|wget|curl' \
+  /home/*/.bash_history /root/.bash_history 2>/dev/null
+/home/ssm-user/.bash_history:7:mvn --version
+/home/ssm-user/.bash_history:15:git pull origin main
+/home/ssm-user/.bash_history:18:git pull origin main
+/home/ssm-user/.bash_history:21:MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+/home/ssm-user/.bash_history:22:source source /etc/profile.d/maven.sh
+/home/ssm-user/.bash_history:23:MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+/home/ssm-user/.bash_history:24:source /etc/profile.d/maven.sh
+/home/ssm-user/.bash_history:25:MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+/home/ssm-user/.bash_history:28:ls -la .dockerignore
+/home/ssm-user/.bash_history:30:sudo docker build -t fx-lp-simulator:1.0 .
+/home/ssm-user/.bash_history:31:sudo docker images
+/home/ssm-user/.bash_history:33:sudo docker volume create fx-lp-store
+/home/ssm-user/.bash_history:34:sudo docker volume create fx-lp-log
+/home/ssm-user/.bash_history:35:sudo docker network create fx-exchange-1
+/home/ssm-user/.bash_history:36:sudo docker run -d   --name fx-lp-simulator   --network fx-exchange-1   -p 9876:9876   -v fx-lp-store:/app/store   -v fx-lp-log:/app/log   --memory=512m   fx-lp-simulator:1.0
+/home/ssm-user/.bash_history:37:sudo docker network inspect fx-exchange-1
+/home/ssm-user/.bash_history:38:sudo docker ps --filter name=fx-lp-simulator
+/home/ssm-user/.bash_history:39:sudo docker logs --tail 50 fx-lp-simulator
+
+
+
+exit
+exit
+sh-5.2$ sudo grep -nEi \
+  'java|corretto|jdk|maven|mvn|docker|git|dnf|yum|wget|curl' \
+  /home/*/.bash_history /root/.bash_history 2>/dev/null
+/home/ssm-user/.bash_history:7:mvn --version
+/home/ssm-user/.bash_history:15:git pull origin main
+/home/ssm-user/.bash_history:18:git pull origin main
+/home/ssm-user/.bash_history:21:MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+/home/ssm-user/.bash_history:22:source source /etc/profile.d/maven.sh
+/home/ssm-user/.bash_history:23:MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+/home/ssm-user/.bash_history:24:source /etc/profile.d/maven.sh
+/home/ssm-user/.bash_history:25:MAVEN_OPTS="-Xmx384m" mvn clean package -DskipTests
+/home/ssm-user/.bash_history:28:ls -la .dockerignore
+/home/ssm-user/.bash_history:30:sudo docker build -t fx-lp-simulator:1.0 .
+/home/ssm-user/.bash_history:31:sudo docker images
+/home/ssm-user/.bash_history:33:sudo docker volume create fx-lp-store
+/home/ssm-user/.bash_history:34:sudo docker volume create fx-lp-log
+/home/ssm-user/.bash_history:35:sudo docker network create fx-exchange-1
+/home/ssm-user/.bash_history:36:sudo docker run -d   --name fx-lp-simulator   --network fx-exchange-1   -p 9876:9876   -v fx-lp-store:/app/store   -v fx-lp-log:/app/log   --memory=512m   fx-lp-simulator:1.0
+/home/ssm-user/.bash_history:37:sudo docker network inspect fx-exchange-1
+/home/ssm-user/.bash_history:38:sudo docker ps --filter name=fx-lp-simulator
+/home/ssm-user/.bash_history:39:sudo docker logs --tail 50 fx-lp-simulator
+/home/ssm-user/.bash_history:42:sudo grep -nEi   'java|corretto|jdk|maven|mvn|docker|git|dnf|yum|wget|curl'   /home/*/.bash_history /root/.bash_history 2>/dev/null

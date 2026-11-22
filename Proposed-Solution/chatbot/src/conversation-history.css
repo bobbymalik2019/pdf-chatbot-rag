@@ -54,12 +54,48 @@
 /* Preserve the original .workspace flex behavior after introducing the wrapper. */
 .workspace > .history-integration {
   display: flex;
-  flex: 1 1 auto;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.history-integration > div:not(.history-modebar) {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.history-integration .history-layout {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.history-integration .history-reader {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.history-chat-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
 }
-.history-integration > .chat { min-height: 0; }
-.history-integration > .welcome { flex: 1 1 auto; }
-.history-integration > .semantic-search-results { min-height: 0; overflow-y: auto; }
-.history-integration > .history-layout { flex: 1 1 auto; min-height: 0; }
+
+/* Allow messages to scroll while composer stays at bottom */
+.history-chat-pane > .chat {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.history-chat-pane > .document-header,
+.history-chat-pane > .composer-wrap {
+  flex: 0 0 auto;
+}

@@ -6,7 +6,7 @@ services:
 
     environment:
       POSTGRES_USER: rag_user
-      POSTGRES_PASSWORD: XXXXXXXXXXXXXXXXXX
+      POSTGRES_PASSWORD: ~!rag_password349###
       POSTGRES_DB: rag_db
 
     ports:
